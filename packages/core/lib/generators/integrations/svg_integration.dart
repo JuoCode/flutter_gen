@@ -15,6 +15,10 @@ class SvgIntegration extends Integration {
         Import('package:flutter/services.dart'),
         Import('package:flutter_svg/flutter_svg.dart', alias: '_svg'),
         Import('package:vector_graphics/vector_graphics.dart', alias: '_vg'),
+        Import(
+          'package:flutter_svg_provider/flutter_svg_provider.dart',
+          alias: '_svg_provider',
+        ),
       ];
 
   @override
@@ -92,6 +96,23 @@ ${isPackage ? "\n  static const String package = '$packageName';" : ''}
       colorFilter: colorFilter ?? (color == null ? null : ColorFilter.mode(color, colorBlendMode)),
       clipBehavior: clipBehavior,
       cacheColorFilter: cacheColorFilter,
+    );
+  }
+
+  ImageProvider provider({
+    Size? size,
+    double? scale,
+    Color? color,
+    SvgSource source = SvgSource.asset,
+    SvgStringGetter? svgGetter,
+  }) {
+    return _svg_provider.Svg(
+      _assetName,
+      size: size,
+      scale: scale,
+      color: color,
+      source: source,
+      svgGetter: svgGetter,
     );
   }
 
