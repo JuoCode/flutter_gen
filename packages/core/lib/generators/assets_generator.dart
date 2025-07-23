@@ -33,7 +33,7 @@ class AssetsGenConfig {
       pubspecFile.parent.absolute.path,
       config.pubspec.packageName,
       config.pubspec.flutterGen,
-      config.pubspec.flutter.assets,
+      _buildFlutterAssetsList(config.pubspec.flutter),
       config.pubspec.flutterGen.assets.exclude.map(Glob.new).toList(),
     );
   }
@@ -46,6 +46,19 @@ class AssetsGenConfig {
 
   String get packageParameterLiteral =>
       flutterGen.assets.outputs.packageParameterEnabled ? _packageName : '';
+}
+
+/// Build assets from the main list and the deferred components.
+List<Object> _buildFlutterAssetsList(Flutter flutter) {
+  final flutterAssets = flutter.assets;
+  // We may have several deferred components, with a list of assets for each.
+  // So before spreading the list of deferred components, we need to spread
+  // the list of assets for each deferred component.
+  final deferredComponents = flutter.deferredComponents ?? [];
+  return deferredComponents.fold(
+    flutterAssets,
+    (list, component) => list + (component.assets ?? []),
+  );
 }
 
 Future<String> generateAssets(
@@ -63,6 +76,7 @@ Future<String> generateAssets(
       ImageIntegration(
         config.packageParameterLiteral,
         parseMetadata: config.flutterGen.parseMetadata,
+        parseAnimation: config.flutterGen.images.parseAnimation,
       ),
     if (config.flutterGen.integrations.flutterSvg)
       SvgIntegration(
@@ -84,7 +98,7 @@ Future<String> generateAssets(
   final deprecatedPackageParam =
       config.flutterGen.assets.packageParameterEnabled != null;
   if (deprecatedStyle || deprecatedPackageParam) {
-    final deprecationBuffer = StringBuffer();
+    final deprecationBuffer = StringBuffer('\n');
     if (deprecatedStyle) {
       deprecationBuffer.writeln(
         sBuildDeprecation(
@@ -145,6 +159,7 @@ Future<String> generateAssets(
   }
 
   final buffer = StringBuffer();
+  buffer.writeln('// dart format width=${formatter.pageWidth}\n');
   buffer.writeln(header);
   buffer.writeln(ignore);
   buffer.writeln(importsBuffer.toString());
